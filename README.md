@@ -333,3 +333,7 @@ first, later positions first). Trailing spaces are not significant. See
 | `src/vistadb3/dumpjson.py`, `cli.py` | JSON form and command line |
 | `oracle/Oracle.cs` | test oracle around the DLL (public API only) |
 | `tools/` | comparison, differential round trips, fixture generation |
+
+## License
+
+MIT, see `LICENSE`.
