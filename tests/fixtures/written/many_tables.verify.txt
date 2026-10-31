@@ -1,0 +1,121 @@
+aTable03_zyxx: 3 rows (RowCount 3)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 3
+  sql lookups on Key: 3 checked, 0 missing
+aTable07_zZyz: 0 rows (RowCount 0)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 0
+  sql lookups on Key: 0 checked, 0 missing
+aTable10_ZYyX: 0 rows (RowCount 0)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 0
+  sql lookups on Key: 0 checked, 0 missing
+aTable13_yyZZ: 2 rows (RowCount 2)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 2
+  sql lookups on Key: 2 checked, 0 missing
+ATable20_YYYz: 1 rows (RowCount 1)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 1
+  sql lookups on Key: 1 checked, 0 missing
+aTable22_YXzY: 4 rows (RowCount 4)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 4
+  sql lookups on Key: 4 checked, 0 missing
+aTable24_YYyy: 4 rows (RowCount 4)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 4
+  sql lookups on Key: 4 checked, 0 missing
+ATable27_yyYx: 1 rows (RowCount 1)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 1
+  sql lookups on Key: 1 checked, 0 missing
+aTable28_ZZxz: 4 rows (RowCount 4)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 4
+  sql lookups on Key: 4 checked, 0 missing
+aTable29_xzxx: 2 rows (RowCount 2)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 2
+  sql lookups on Key: 2 checked, 0 missing
+ATable32_Zyxz: 1 rows (RowCount 1)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 1
+  sql lookups on Key: 1 checked, 0 missing
+ATable33_yyXY: 2 rows (RowCount 2)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 2
+  sql lookups on Key: 2 checked, 0 missing
+ATable35_ZzXX: 1 rows (RowCount 1)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 1
+  sql lookups on Key: 1 checked, 0 missing
+aTable36_zYyx: 4 rows (RowCount 4)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 4
+  sql lookups on Key: 4 checked, 0 missing
+ATable37_Zyxy: 3 rows (RowCount 3)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 3
+  sql lookups on Key: 3 checked, 0 missing
+bTable00_Yyzz: 3 rows (RowCount 3)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 3
+  sql lookups on Key: 3 checked, 0 missing
+bTable01_XZzz: 2 rows (RowCount 2)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 2
+  sql lookups on Key: 2 checked, 0 missing
+BTable02_zZYX: 4 rows (RowCount 4)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 4
+  sql lookups on Key: 4 checked, 0 missing
+BTable06_ZxxY: 4 rows (RowCount 4)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 4
+  sql lookups on Key: 4 checked, 0 missing
+bTable11_zZzX: 2 rows (RowCount 2)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 2
+  sql lookups on Key: 2 checked, 0 missing
+BTable15_ZYxZ: 2 rows (RowCount 2)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 2
+  sql lookups on Key: 2 checked, 0 missing
+bTable16_Xzyy: 0 rows (RowCount 0)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 0
+  sql lookups on Key: 0 checked, 0 missing
+bTable21_XXzy: 1 rows (RowCount 1)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 1
+  sql lookups on Key: 1 checked, 0 missing
+BTable23_xYyZ: 1 rows (RowCount 1)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 1
+  sql lookups on Key: 1 checked, 0 missing
+bTable31_XXYZ: 3 rows (RowCount 3)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 3
+  sql lookups on Key: 3 checked, 0 missing
+CTable04_yXyY: 0 rows (RowCount 0)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 0
+  sql lookups on Key: 0 checked, 0 missing
+CTable05_YyZZ: 2 rows (RowCount 2)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 2
+  sql lookups on Key: 2 checked, 0 missing
+cTable08_YxZz: 4 rows (RowCount 4)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 4
+  sql lookups on Key: 4 checked, 0 missing
+cTable09_zzyy: 2 rows (RowCount 2)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 2
+  sql lookups on Key: 2 checked, 0 missing
+cTable12_XZyZ: 3 rows (RowCount 3)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 3
+  sql lookups on Key: 3 checked, 0 missing
+cTable14_xxXz: 1 rows (RowCount 1)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 1
+  sql lookups on Key: 1 checked, 0 missing
+cTable17_YZxz: 0 rows (RowCount 0)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 0
+  sql lookups on Key: 0 checked, 0 missing
+cTable18_xxZx: 0 rows (RowCount 0)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 0
+  sql lookups on Key: 0 checked, 0 missing
+CTable19_ZZXZ: 4 rows (RowCount 4)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 4
+  sql lookups on Key: 4 checked, 0 missing
+cTable25_YXZz: 0 rows (RowCount 0)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 0
+  sql lookups on Key: 0 checked, 0 missing
+cTable26_YxYX: 0 rows (RowCount 0)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 0
+  sql lookups on Key: 0 checked, 0 missing
+CTable30_xzYz: 3 rows (RowCount 3)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 3
+  sql lookups on Key: 3 checked, 0 missing
+CTable34_zYxx: 0 rows (RowCount 0)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 0
+  sql lookups on Key: 0 checked, 0 missing
+cTable38_yXZx: 1 rows (RowCount 1)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 1
+  sql lookups on Key: 1 checked, 0 missing
+cTable39_xZXx: 2 rows (RowCount 2)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 2
+  sql lookups on Key: 2 checked, 0 missing
+VERIFY OK

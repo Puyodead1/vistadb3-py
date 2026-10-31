@@ -1,0 +1,8 @@
+Idx: 700 rows (RowCount 700)
+  index IX_BA (B;A): find misses 0, wrong rows 0, walked 700
+  index IX_C (C): find misses 0, wrong rows 0, walked 700
+  index IX_A (A): find misses 0, wrong rows 0, walked 700
+  index IX_Ddesc (DESC(D)): find misses 0, wrong rows 0, walked 700
+  index PK_Idx (Id): find misses 0, wrong rows 0, walked 700
+  sql lookups on Id: 100 checked, 0 missing
+VERIFY OK

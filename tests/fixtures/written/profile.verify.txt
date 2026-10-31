@@ -1,0 +1,16 @@
+Cache: 12 rows (RowCount 12)
+  index IX_Key (Name): find misses 0, wrong rows 0, walked 12
+  sql lookups on Name: 12 checked, 0 missing
+Market: 39 rows (RowCount 39)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 39
+  sql lookups on Key: 39 checked, 0 missing
+ProductCatalog: 399 rows (RowCount 399)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 399
+  sql lookups on Key: 100 checked, 0 missing
+Review: 0 rows (RowCount 0)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 0
+  sql lookups on Key: 0 checked, 0 missing
+Version: 2 rows (RowCount 2)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 2
+  sql lookups on Key: 2 checked, 0 missing
+VERIFY OK

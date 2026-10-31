@@ -1,0 +1,4 @@
+Big: 120 rows (RowCount 120)
+  index IX_Key (Key): find misses 0, wrong rows 0, walked 120
+  sql lookups on Key: 100 checked, 0 missing
+VERIFY OK
