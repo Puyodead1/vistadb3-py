@@ -64,7 +64,7 @@ class Column:
 
     @property
     def codec(self) -> ColumnCodec:
-        return ColumnCodec(self.type, self.code_page)
+        return ColumnCodec(self.type, self.code_page, max_length=self.max_length)
 
     @property
     def type_name(self) -> str:

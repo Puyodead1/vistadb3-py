@@ -5,6 +5,9 @@
 //   oracle dump  <db>    <out.json> [sql] dump schema + rows (DDA, or "sql" = SELECT * per table)
 //   oracle pack  <db>                    PackDatabase in place
 //   oracle repair <db>                   RepairDatabase in place
+//   oracle verify <db> [sqlLimit]        DDA Find() every row through every index, walk each
+//                                        index, and (up to sqlLimit rows per table) look rows
+//                                        up with SQL WHERE on the first index column
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -39,6 +42,7 @@ static class Oracle
                 case "dump": return Dump(args[1], args[2], args.Length > 3 && args[3] == "sql");
                 case "pack": return Pack(args[1]);
                 case "repair": return Repair(args[1]);
+                case "verify": return Verify(args[1], args.Length > 2 ? int.Parse(args[2]) : 0);
             }
             Console.Error.WriteLine("unknown command");
             return 2;
@@ -76,6 +80,98 @@ static class Oracle
             }
         }
         return 0;
+    }
+
+    static string Literal(object v)
+    {
+        if (v is string) return "'" + ((string)v).Replace("'", "''") + "'";
+        if (v is bool) return (bool)v ? "1" : "0";
+        if (v is DateTime) return "'" + ((DateTime)v).ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture) + "'";
+        return Convert.ToString(v, CultureInfo.InvariantCulture);
+    }
+
+    static int Verify(string db, int sqlLimit)
+    {
+        System.Threading.Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+        int failures = 0;
+        using (IVistaDBDDA dda = VistaDBEngine.Connections.OpenDDA())
+        using (IVistaDBDatabase d = dda.OpenDatabase(db, VistaDBDatabaseOpenMode.NonexclusiveReadWrite, null))
+        {
+            foreach (object n in d.EnumTables())
+            {
+                string name = (string)n;
+                IVistaDBTableSchema s = d.TableSchema(name);
+                var rows = new List<object[]>();
+                using (IVistaDBTable t = d.OpenTable(name, false, true))
+                {
+                    t.First();
+                    while (!t.EndOfTable)
+                    {
+                        var r = new object[s.ColumnCount];
+                        for (int i = 0; i < s.ColumnCount; i++) { var v = t.Get(i); r[i] = v.IsNull ? null : v.Value; }
+                        rows.Add(r);
+                        t.Next();
+                    }
+                    Console.WriteLine("{0}: {1} rows (RowCount {2})", name, rows.Count, t.RowCount);
+                    if (rows.Count != t.RowCount) failures++;
+                    foreach (object e in Items(s.Indexes))
+                    {
+                        var ix = (IVistaDBIndexInformation)e;
+                        if (ix.FTS) continue;
+                        string[] cols = ix.KeyExpression.Split(';');
+                        int[] ord = new int[cols.Length];
+                        for (int k = 0; k < cols.Length; k++) ord[k] = s[cols[k].Trim()].RowIndex;
+                        int miss = 0, wrong = 0;
+                        foreach (var r in rows)
+                        {
+                            var parts = new List<string>();
+                            bool hasNull = false;
+                            for (int k = 0; k < cols.Length; k++)
+                            {
+                                if (r[ord[k]] == null) hasNull = true;
+                                parts.Add(cols[k].Trim() + ": " + Literal(r[ord[k]]));
+                            }
+                            if (hasNull) continue;
+                            if (!t.Find(string.Join("; ", parts.ToArray()), ix.Name, false, false)) { miss++; continue; }
+                            for (int k = 0; k < cols.Length; k++)
+                                if (!object.Equals(t.Get(ord[k]).Value, r[ord[k]])) { wrong++; break; }
+                        }
+                        t.ActiveIndex = ix.Name;
+                        int walked = 0;
+                        t.First();
+                        while (!t.EndOfTable) { walked++; t.Next(); }
+                        t.ActiveIndex = null;
+                        Console.WriteLine("  index {0} ({1}): find misses {2}, wrong rows {3}, walked {4}", ix.Name, ix.KeyExpression, miss, wrong, walked);
+                        if (miss > 0 || wrong > 0 || walked != rows.Count) failures++;
+                    }
+                }
+                if (sqlLimit > 0)
+                {
+                    IVistaDBIndexInformation first = null;
+                    foreach (object e in Items(s.Indexes)) { first = (IVistaDBIndexInformation)e; if (first.Primary) break; }
+                    if (first == null) continue;
+                    string col = first.KeyExpression.Split(';')[0].Trim();
+                    int o = s[col].RowIndex, miss = 0, checkedRows = 0;
+                    using (var conn = new VistaDBConnection("Open Mode=NonExclusiveReadWrite;Data Source=" + db))
+                    {
+                        conn.Open();
+                        foreach (var r in rows)
+                        {
+                            if (checkedRows++ >= sqlLimit) break;
+                            if (r[o] == null) continue;
+                            using (var cmd = new VistaDBCommand("SET OPTIMIZATION ON; SELECT COUNT(*) FROM [" + name + "] WHERE [" + col + "] = " + Literal(r[o]), conn))
+                            {
+                                if (Convert.ToInt32(cmd.ExecuteScalar()) < 1) miss++;
+                            }
+                        }
+                    }
+                    Console.WriteLine("  sql lookups on {0}: {1} checked, {2} missing", col, Math.Min(sqlLimit, rows.Count), miss);
+                    if (miss > 0) failures++;
+                }
+            }
+        }
+        Console.WriteLine(failures == 0 ? "VERIFY OK" : "VERIFY FAILED: " + failures);
+        return failures == 0 ? 0 : 3;
     }
 
     static int Pack(string db)
