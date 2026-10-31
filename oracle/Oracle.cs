@@ -119,6 +119,12 @@ static class Oracle
                         var ix = (IVistaDBIndexInformation)e;
                         if (ix.FTS) continue;
                         string[] cols = ix.KeyExpression.Split(';');
+                        for (int k = 0; k < cols.Length; k++)
+                        {
+                            string c = cols[k].Trim();
+                            if (c.StartsWith("DESC(", StringComparison.OrdinalIgnoreCase) && c.EndsWith(")")) c = c.Substring(5, c.Length - 6);
+                            cols[k] = c;
+                        }
                         int[] ord = new int[cols.Length];
                         for (int k = 0; k < cols.Length; k++) ord[k] = s[cols[k].Trim()].RowIndex;
                         int miss = 0, wrong = 0;
@@ -134,7 +140,14 @@ static class Oracle
                             if (hasNull) continue;
                             if (!t.Find(string.Join("; ", parts.ToArray()), ix.Name, false, false)) { miss++; continue; }
                             for (int k = 0; k < cols.Length; k++)
-                                if (!object.Equals(t.Get(ord[k]).Value, r[ord[k]])) { wrong++; break; }
+                            {
+                                object got = t.Get(ord[k]).Value, want = r[ord[k]];
+                                bool same = got is string && want is string
+                                    ? CultureInfo.GetCultureInfo(1033).CompareInfo.Compare((string)got, (string)want,
+                                        d.CaseSensitive ? CompareOptions.None : CompareOptions.IgnoreCase) == 0
+                                    : object.Equals(got, want);
+                                if (!same) { wrong++; break; }
+                            }
                         }
                         t.ActiveIndex = ix.Name;
                         int walked = 0;
@@ -151,6 +164,7 @@ static class Oracle
                     foreach (object e in Items(s.Indexes)) { first = (IVistaDBIndexInformation)e; if (first.Primary) break; }
                     if (first == null) continue;
                     string col = first.KeyExpression.Split(';')[0].Trim();
+                    if (col.StartsWith("DESC(", StringComparison.OrdinalIgnoreCase) && col.EndsWith(")")) col = col.Substring(5, col.Length - 6);
                     int o = s[col].RowIndex, miss = 0, checkedRows = 0;
                     using (var conn = new VistaDBConnection("Open Mode=NonExclusiveReadWrite;Data Source=" + db))
                     {

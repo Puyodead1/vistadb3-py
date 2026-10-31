@@ -54,22 +54,44 @@ def _dec_str(d: Decimal) -> str:
     return s
 
 
+def _g(f: float, digits: int) -> str:
+    """.NET-style "G<digits>" formatting (ties round half away from zero)."""
+    from decimal import ROUND_HALF_UP
+    if f != f:
+        return "NaN"
+    if f in (float("inf"), float("-inf")):
+        return "Infinity" if f > 0 else "-Infinity"
+    if f == 0:
+        return "-0" if str(f).startswith("-") else "0"
+    d = Decimal(f)
+    exp = d.adjusted()
+    q = d.quantize(Decimal(1).scaleb(exp - digits + 1), rounding=ROUND_HALF_UP)
+    if q.adjusted() != exp:  # rounding carried into a new digit
+        exp = q.adjusted()
+        q = q.quantize(Decimal(1).scaleb(exp - digits + 1), rounding=ROUND_HALF_UP)
+    if -5 < exp < digits:
+        t = format(q, "f")
+        if "." in t:
+            t = t.rstrip("0").rstrip(".")
+        return t
+    mant = format(q.scaleb(-exp), "f")
+    if "." in mant:
+        mant = mant.rstrip("0").rstrip(".")
+    return f"{mant}E{'+' if exp >= 0 else '-'}{abs(exp):02d}"
+
+
 def _float_str(f: float, vtype) -> str:
+    """Format like .NET's "R" format: G15 (G7 for REAL) if it round-trips, else G17 (G9)."""
+    import struct
     if vtype == VType.REAL:
-        import struct
-        f = struct.unpack("<f", struct.pack("<f", f))[0]
-        # shortest repr that round-trips through float32, like .NET "R"
-        for p in range(1, 10):
-            s = "%.*g" % (p, f)
-            if struct.unpack("<f", struct.pack("<f", float(s)))[0] == f:
-                return _net_float(s)
-    return _net_float(repr(f))
-
-
-def _net_float(s: str) -> str:
-    s = s.replace("e+", "E+").replace("e-", "E-")
-    if s.endswith(".0"):
-        s = s[:-2]
+        f32 = struct.unpack("<f", struct.pack("<f", f))[0]
+        s = _g(f32, 7)
+        if struct.unpack("<f", struct.pack("<f", float(s.replace("Infinity", "inf"))))[0] != f32:
+            s = _g(f32, 9)
+        return s
+    s = _g(f, 15)
+    if float(s.replace("Infinity", "inf")) != f:
+        s = _g(f, 17)
     return s
 
 

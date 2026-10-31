@@ -16,9 +16,11 @@ File layout produced (page numbers):
 """
 from __future__ import annotations
 
+import functools
 import os
 import struct
 import uuid
+import warnings
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -70,8 +72,8 @@ class ColumnDef:
             self.type = BY_PUBLIC_NAME[self.type.lower()]
         if self.code_page is None:
             self.code_page = DEFAULT_CODE_PAGE.get(self.type, 0)
-        if self.type == VType.VARBINARY and not self.max_length:
-            self.max_length = 0xFFFF
+        if self.type == VType.VARBINARY:
+            self.max_length = 0xFFFF  # the engine ignores declared VARBINARY lengths
         if self.type in STRING_TYPES and not self.max_length:
             raise ValueError(f"column {self.name}: {self.type.name} needs a max_length")
 
@@ -88,14 +90,26 @@ class ColumnDef:
 
 @dataclass
 class IndexDef:
+    """An index; a column written as ``"DESC(name)"`` is sorted in descending order."""
     name: str
     columns: list[str]
     unique: bool = False
     primary: bool = False
 
     @property
+    def keys(self) -> list[tuple[str, bool]]:
+        out = []
+        for c in self.columns:
+            c = c.strip()
+            if c.upper().startswith("DESC(") and c.endswith(")"):
+                out.append((c[5:-1].strip(), True))
+            else:
+                out.append((c, False))
+        return out
+
+    @property
     def expression(self) -> str:
-        return ";".join(self.columns)
+        return ";".join(f"DESC({n})" if d else n for n, d in self.keys)
 
 
 @dataclass
@@ -139,6 +153,7 @@ class DatabaseWriter:
         self._tables: dict[str, _Table] = {}
         self._catalog_rowid = 0
         self._closed = False
+        self._warned_collation = False
         for _ in range(3):  # header, catalog root, catalog column map
             self._alloc(1)
 
@@ -170,7 +185,7 @@ class DatabaseWriter:
             ixs.append(IndexDef(primary_key_name or f"PK_{name}", keys, unique=True, primary=True))
         t = _Table(name, cols)
         for ix in ixs:
-            for cname in ix.columns:
+            for cname, _ in ix.keys:
                 self._col_index(t, cname)
             t.indexes.append(ix)
         self._tables[name] = t
@@ -318,7 +333,12 @@ class DatabaseWriter:
             return (0,)
         t = c.type
         if t in STRING_TYPES or t in (VType.TEXT, VType.NTEXT) or c.plain_text:
-            return (1, collation.sort_key(raw.decode(c.encoding), self.case_sensitive))
+            text = raw.decode(c.encoding)
+            if not self._warned_collation and not collation.is_exact(text):
+                self._warned_collation = True
+                warnings.warn("index key with non-ASCII text: its position is approximated and may differ "
+                              "from the engine's order (lookups of such keys could fail)", stacklevel=4)
+            return (1, collation.sort_key(text, self.case_sensitive))
         if t in (VType.INT, VType.BIGINT, VType.TIMESTAMP):
             return (1, raw)
         if t in FIXED_SIZE and t not in (VType.UNIQUEIDENTIFIER,):
@@ -364,7 +384,8 @@ class DatabaseWriter:
 
         for ix in t.indexes:
             hdr = self._alloc(1)
-            idx = [self._col_index(t, n) for n in ix.columns]
+            idx = [self._col_index(t, n) for n, _ in ix.keys]
+            desc = [d for _, d in ix.keys]
             kcodecs = [codecs[i] for i in idx]
             items = []
             for rid, raws in t.rows:
@@ -374,7 +395,10 @@ class DatabaseWriter:
                         raise ValueError(f"index {ix.name}: out-of-row values cannot be index keys")
                 sk = tuple(self._value_key(v, c) for v, c in zip(kr, kcodecs))
                 items.append((sk, rid, kr))
-            items.sort(key=lambda x: (x[0], x[1]))
+            if any(desc):
+                items.sort(key=functools.cmp_to_key(lambda a, b: _cmp_keys(a, b, desc)))
+            else:
+                items.sort(key=lambda x: (x[0], x[1]))
             if ix.unique:
                 for a, b in zip(items, items[1:]):
                     if a[0] == b[0]:
@@ -390,7 +414,8 @@ class DatabaseWriter:
             struct.pack_into("<q", h, 0x3A, ixroot)
             self._write(hdr, bytes(h))
             self._catalog_row(catalog, OBJ_INDEX, t.header_offset, ix.name, hdr, flags, status=False,
-                              script=ix.expression, extra_binary=b"\0\0")
+                              script=ix.expression,
+                              extra_binary=bytes(b for i, d in zip(idx, desc) for b in (i, int(d))))
 
         # column map page
         self._write(aux, _column_map(len(t.columns)))
@@ -439,6 +464,14 @@ class DatabaseWriter:
             h[pos + 2:pos + 2 + len(nm)] = nm
             pos += 2 + len(nm)
         return bytes(h)
+
+
+def _cmp_keys(a, b, desc) -> int:
+    for x, y, d in zip(a[0], b[0], desc):
+        if x != y:
+            r = -1 if x < y else 1
+            return -r if d else r
+    return (a[1] > b[1]) - (a[1] < b[1])
 
 
 def _column_map(ncols: int, page_size: int | None = None) -> bytes:

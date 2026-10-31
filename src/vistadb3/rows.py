@@ -384,8 +384,8 @@ def from_python(v, c: ColumnCodec):
         if isinstance(v, (bytes, bytearray)):
             return bytes(v)
         s = str(v)
-        if t in (VType.CHAR, VType.NCHAR) and not c.plain_text:
-            s = s.rstrip(" ")
+        if t in STRING_TYPES and not c.plain_text:
+            s = s.rstrip(" ")  # the engine never stores trailing spaces in these types
         return s.encode(c.encoding, "replace")
     if t in (VType.IMAGE, VType.VARBINARY):
         return bytes(v)

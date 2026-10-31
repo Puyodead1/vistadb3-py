@@ -240,6 +240,17 @@ class Database:
             t = self.table(t)
         return struct.unpack_from("<I", self.page(t.header_offset), 0x1E)[0]
 
+    def iter_index(self, t: Table | str, index: Index | str) -> Iterator[tuple[int, tuple]]:
+        """Yield (row id, key values) in index order."""
+        if isinstance(t, str):
+            t = self.table(t)
+        if isinstance(index, str):
+            index = next(i for i in t.indexes if i.name.lower() == index.lower())
+        codecs = [c.codec for c, _ in index_columns(t, index)]
+        root = struct.unpack_from("<q", self.page(index.header_offset), 0x3A)[0]
+        for r in self.records(root, codecs):
+            yield r.key, tuple(to_python(v, c) for v, c in zip(r.raw, codecs))
+
     def iter_rows(self, t: Table | str, with_rowid: bool = False) -> Iterator[tuple]:
         """Yield the rows of a table in storage (row id) order as tuples of Python values."""
         if isinstance(t, str):
@@ -252,6 +263,18 @@ class Database:
                     raw = self.read_blob(raw)
                 vals.append(to_python(raw, c))
             yield (r.key, *vals) if with_rowid else tuple(vals)
+
+
+def index_columns(t: Table, ix: Index) -> list[tuple[Column, bool]]:
+    """Key columns of an index as (column, descending) pairs."""
+    out = []
+    for part in ix.expression.split(";"):
+        part = part.strip()
+        desc = part.upper().startswith("DESC(") and part.endswith(")")
+        name = part[5:-1].strip() if desc else part
+        col = next(c for c in t.columns if c.name.lower() == name.lower())
+        out.append((col, desc))
+    return out
 
 
 def _first_record(pg: bytes, used: int):
